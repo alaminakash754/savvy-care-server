@@ -29,6 +29,8 @@ async function run() {
         // await client.connect();
         const doctorCollection = client.db('savvyCareDb').collection("doctors");
         const userCollection = client.db("savvyCareDb").collection("users");
+        const treatmentCollection = client.db("savvyCareDb").collection("treatments");
+        const appointmentCollection = client.db("savvyCareDb").collection("appointments");
 
 
 
@@ -117,6 +119,15 @@ async function run() {
             const result = await cursor.toArray();
             res.send(result);
         })
+
+        // treatment api 
+        app.get('/treatments', async (req, res) => {
+            const result = await treatmentCollection.find().toArray();
+            res.send(result);
+        })
+
+        // appointments related api 
+        
 
         // Send a ping to confirm a successful connection
         // await client.db("admin").command({ ping: 1 });
