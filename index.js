@@ -127,7 +127,12 @@ async function run() {
         })
 
         // appointments related api 
-        
+        app.post('/appointments', async (req, res) => {
+            const appointment = req.body;
+            console.log(appointment)
+            const result = await appointmentCollection.insertOne(appointment);
+            res.send(result);
+        })
 
         // Send a ping to confirm a successful connection
         // await client.db("admin").command({ ping: 1 });
