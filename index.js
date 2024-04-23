@@ -108,7 +108,6 @@ async function run() {
 // doctor related api 
         app.post('/doctors', async (req, res) => {
             const doctor = req.body;
-            console.log(doctor)
             const result = await doctorCollection.insertOne(doctor);
             res.send(result);
         })
@@ -131,9 +130,16 @@ async function run() {
             const appointment = req.body;
             console.log(appointment)
             const result = await appointmentCollection.insertOne(appointment);
+            result.appointment=appointment;
             res.send(result);
         })
 
+        app.get('/appointments', async(req, res) => {
+            const email = req.query.email;
+            const query = {email: email};
+            const result = await appointmentCollection.find(query).toArray();
+            res.send(result);
+          })
         // Send a ping to confirm a successful connection
         // await client.db("admin").command({ ping: 1 });
         console.log("Pinged your deployment. You successfully connected to MongoDB!");
