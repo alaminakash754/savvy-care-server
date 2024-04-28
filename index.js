@@ -156,6 +156,15 @@ async function run() {
       });
     });
 
+    app.get("/payments/:email", verifyToken, async (req, res) => {
+      const query = { email: req.params.email };
+      if (req.params.email !== req.decoded.email) {
+        return res.status(403).send({ message: "forbidden access" });
+      }
+      const result = await paymentCollection.find(query).toArray();
+      res.send(result);
+    });
+
     app.post("/payments", async (req, res) => {
       const payment = req.body;
       const paymentResult = await paymentCollection.insertOne(payment);
@@ -167,6 +176,39 @@ async function run() {
       };
       const deleteResult = await appointmentCollection.deleteMany(query);
       res.send({ paymentResult, deleteResult });
+    });
+
+    // stats or analytic
+    app.get("/admin-stats", async (req, res) => {
+      const users = await userCollection.estimatedDocumentCount();
+      const doctors = await doctorCollection.estimatedDocumentCount();
+      const appointments = await appointmentCollection.estimatedDocumentCount();
+
+      // this is not best way
+      // const payments = await paymentCollection.find().toArray();
+      // const revenue = payments.reduce((total, payment) => total + payment.price, 0)
+
+      const result = await paymentCollection
+        .aggregate([
+          {
+            $group: {
+              _id: null,
+              totalRevenue: {
+                $sum: "$price",
+              },
+            },
+          },
+        ])
+        .toArray();
+
+      const revenue = result.length > 0 ? result[0].totalRevenue : 0;
+
+      res.send({
+        users,
+        doctors,
+        appointments,
+        revenue,
+      });
     });
 
     // Send a ping to confirm a successful connection
