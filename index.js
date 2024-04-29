@@ -28,6 +28,9 @@ async function run() {
     // await client.connect();
     const doctorCollection = client.db("savvyCareDb").collection("doctors");
     const userCollection = client.db("savvyCareDb").collection("users");
+    const prescriptionCollection = client
+      .db("savvyCareDb")
+      .collection("prescriptions");
     const treatmentCollection = client
       .db("savvyCareDb")
       .collection("treatments");
@@ -106,6 +109,32 @@ async function run() {
       res.send({ admin });
     });
 
+    app.get("/users/doctor/:email", verifyToken, async (req, res) => {
+      const email = req.params.email;
+      if (email !== req.decoded.email) {
+        return res.status(403).send({ message: "forbidden access" });
+      }
+      const query = { email: email };
+      const user = await userCollection.findOne(query);
+      let doctor = false;
+      if (user) {
+        doctor = user?.role === "doctor";
+      }
+      res.send({ doctor });
+    });
+
+    app.patch("/users/doctor/:id", verifyToken, async (req, res) => {
+      const id = req.params.id;
+      const filter = { _id: new ObjectId(id) };
+      const updatedDoc = {
+        $set: {
+          role: "doctor",
+        },
+      };
+      const result = await userCollection.updateOne(filter, updatedDoc);
+      res.send(result);
+    });
+
     // doctor related api
     app.post("/doctors", async (req, res) => {
       const doctor = req.body;
@@ -115,6 +144,19 @@ async function run() {
 
     app.get("/doctors", async (req, res) => {
       const cursor = doctorCollection.find();
+      const result = await cursor.toArray();
+      res.send(result);
+    });
+
+    // prescription related api
+    app.post("/prescriptions", async (req, res) => {
+      const prescription = req.body;
+      const result = await prescriptionCollection.insertOne(prescription);
+      res.send(result);
+    });
+
+    app.get("/prescriptions", async (req, res) => {
+      const cursor = prescriptionCollection.find();
       const result = await cursor.toArray();
       res.send(result);
     });
@@ -183,10 +225,6 @@ async function run() {
       const users = await userCollection.estimatedDocumentCount();
       const doctors = await doctorCollection.estimatedDocumentCount();
       const appointments = await appointmentCollection.estimatedDocumentCount();
-
-      // this is not best way
-      // const payments = await paymentCollection.find().toArray();
-      // const revenue = payments.reduce((total, payment) => total + payment.price, 0)
 
       const result = await paymentCollection
         .aggregate([
