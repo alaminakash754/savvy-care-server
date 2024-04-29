@@ -28,6 +28,7 @@ async function run() {
     // await client.connect();
     const doctorCollection = client.db("savvyCareDb").collection("doctors");
     const userCollection = client.db("savvyCareDb").collection("users");
+    const reviewCollection = client.db("savvyCareDb").collection("reviews");
     const prescriptionCollection = client
       .db("savvyCareDb")
       .collection("prescriptions");
@@ -132,6 +133,17 @@ async function run() {
         },
       };
       const result = await userCollection.updateOne(filter, updatedDoc);
+      res.send(result);
+    });
+    // reviews related api
+    app.post("/reviews", async (req, res) => {
+      const review = req.body;
+      const result = await reviewCollection.insertOne(review);
+      res.send(result);
+    });
+
+    app.get("/reviews", async (req, res) => {
+      const result = await reviewCollection.find().toArray();
       res.send(result);
     });
 
